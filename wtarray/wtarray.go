@@ -2,11 +2,12 @@ package wtarray
 
 import (
 	"errors"
-	"math/bits"
+	"github.com/uvelichitel/wtree/bitmap64"
+	"github.com/uvelichitel/wtree"
 )
 
 type WTArray struct {
-	Len uint
+	Count uint
 	*Maps
 	Mark int
 	*Dict
@@ -22,29 +23,28 @@ func (d Dict) Lookup(s string) (int, error) {
 	return 0, errors.New("Term not found in dictionary")
 }
 
-type Maps []Bitmap64
+type Maps []bitmap64.Bitmap64
 
 //func (wt *WTArray)Edit(sym string, pos uint, d Dict) error{
 //	if
 //
 //	return nil
 //}
-func (wt WTArray) Count() uint {
-	return wt.Len
-}
-
-func (wt WTArray) BitMap() Bitmap {
+//func (wt WTArray) Count() uint {
+//	return wt.Count
+//}
+func (wt WTArray) BitMap() wtree.Bitmap {
 	return (*wt.Maps)[wt.Mark]
 }
-func (wt WTArray) RChild() WTree {
+func (wt WTArray) RChild() wtree.WTree {
 	wt.Mark = 2*wt.Mark + 2
 	return wt
 }
-func (wt WTArray) LChild() WTree {
+func (wt WTArray) LChild() wtree.WTree {
 	wt.Mark = 2*wt.Mark + 1
 	return wt
 }
-func (wt WTArray) Parrent() WTree {
+func (wt WTArray) Parrent() wtree.WTree {
 	wt.Mark = (wt.Mark - 1) / 2
 	return wt
 }
@@ -80,6 +80,26 @@ func (wt WTArray) LeafToDict(pos uint) string {
 	return (*wt.Dict)[2*wt.Mark+1+int(bit)-len(*wt.Maps)]
 }
 
+func (wta WTArray) AccessDict(pos uint) string {
+	wt, pos := wtree.Access(wta, pos)
+	wta = wt.(WTArray)
+	bit := (*wta.Maps)[wta.Mark].Get(pos)
+	return (*wta.Dict)[2*wta.Mark+1+int(bit)-len(*wta.Maps)]
+}
+
+func (wt WTArray) TrackDict(sym string, count uint) (uint, error) {
+	ind, err := wt.Dict.Lookup(sym)
+	var pos uint
+	if err != nil {
+		return 0, errors.New("Symbol is absent in dictionary")
+	}
+	bit := int8(ind & 1)
+	m := (ind + len(*wt.Maps) - 1) / 2
+	wt.Mark = m
+	_, pos = wtree.Track(wt, count, bit)
+	return pos, nil
+}
+
 func (wt *WTArray) Append(sym string) error {
 	var l, r, h int
 	index, err := wt.Dict.Lookup(sym)
@@ -91,8 +111,8 @@ func (wt *WTArray) Append(sym string) error {
 			return errors.New("Not enough space")
 		}
 	}
-	pos := wt.Len
-	wt.Len++
+	pos := wt.Count
+	wt.Count++
 	h = cap(*wt.Dict)
 	l = 0
 	r = h - 1
@@ -135,132 +155,8 @@ func FromDictionary(d Dict) WTArray {
 	}
 	maps := make(Maps, c-1, c-1)
 	for k, _ := range maps {
-		maps[k] = make(Bitmap64, 0)
+		maps[k] = make(bitmap64.Bitmap64, 0)
 	}
 	wt.Maps = &maps
 	return wt
-}
-
-type Bitmap64 []uint64
-
-func (bm *Bitmap64) Set(bit int8, pos uint) {
-	n := int(pos / 64)
-	d := n - len(*bm) + 1
-	if d > 0 {
-		a := make([]uint64, d)
-		*bm = append(*bm, a...)
-	}
-	if bit == 0 {
-		(*bm)[int(pos/64)] &^= 1 << (pos % 64)
-	} else {
-		(*bm)[n] |= 1 << (pos % 64)
-	}
-}
-
-func (bm Bitmap64) Get(pos uint) int8 {
-	return int8(bm[int(pos/64)] >> (pos % 64) & 1)
-}
-
-func (bm Bitmap64) Rank1(pos uint) (count uint) {
-	var n uint
-	for ; n < pos/64; n++ {
-		count += uint(bits.OnesCount64(bm[int(n)]))
-	}
-	count += uint(bits.OnesCount64(bm[int(n)] << (63 - pos%64)))
-	return
-}
-func (bm Bitmap64) Rank0(pos uint) (count uint) {
-	count = pos - bm.Rank1(pos) + 1
-	return
-}
-
-func (bm Bitmap64) Select1(num uint) (pos uint) {
-	var c uint64
-	var c1 uint32
-	var c2 uint16
-	var c3 uint8
-	var n int
-	var d uint
-	for {
-		d = uint(bits.OnesCount64(bm[n]))
-		if d >= num {
-			break
-		}
-		num -= d
-		pos += 64
-		n++
-	}
-	c = bm[n]
-	c1 = uint32(c)
-	d = uint(bits.OnesCount32(c1))
-	if d < num {
-		num -= d
-		pos += 32
-		c1 = uint32(c >> 32)
-	}
-	c2 = uint16(c1)
-	d = uint(bits.OnesCount16(c2))
-	if d < num {
-		num -= d
-		pos += 16
-		c2 = uint16(c1 >> 16)
-	}
-	c3 = uint8(c2)
-	d = uint(bits.OnesCount8(c3))
-	if d < num {
-		num -= d
-		pos += 8
-		c3 = uint8(c2 >> 8)
-	}
-	for ; num != 0; num-- {
-		c3 &= c3 - 1
-	}
-	pos += uint(bits.TrailingZeros8(c3))
-	return pos
-}
-
-func (bm Bitmap64) Select0(num uint) (pos uint) {
-	var c uint64
-	var c1 uint32
-	var c2 uint16
-	var c3 uint8
-	var n int
-	var d uint
-	num++
-	for {
-		d = 64 - uint(bits.OnesCount64(bm[n]))
-		if d >= num {
-			break
-		}
-		num -= d
-		pos += 64
-		n++
-	}
-	c = bm[n]
-	c1 = uint32(c)
-	d = 32 - uint(bits.OnesCount32(c1))
-	if d < num {
-		num -= d
-		pos += 32
-		c1 = uint32(c >> 32)
-	}
-	c2 = uint16(c1)
-	d = 16 - uint(bits.OnesCount16(c2))
-	if d < num {
-		num -= d
-		pos += 16
-		c2 = uint16(c1 >> 16)
-	}
-	c3 = uint8(c2)
-	d = 8 - uint(bits.OnesCount8(c3))
-	if d < num {
-		num -= d
-		pos += 8
-		c3 = uint8(c2 >> 8)
-	}
-	for c3 = ^c3; num != 1; num-- {
-		c3 &= c3 - 1
-	}
-	pos += uint(bits.TrailingZeros8(c3))
-	return pos
 }
