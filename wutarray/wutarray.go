@@ -1,4 +1,4 @@
-package uwtree
+package wutarray
 
 import(
 	"errors"

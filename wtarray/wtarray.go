@@ -12,6 +12,9 @@ type WTArray struct {
 	Mark int
 	*Dict
 }
+
+
+
 type Dict []string
 
 func (d Dict) Lookup(s string) (int, error) {
