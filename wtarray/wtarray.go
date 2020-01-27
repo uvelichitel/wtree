@@ -2,8 +2,9 @@ package wtarray
 
 import (
 	"errors"
-	"github.com/uvelichitel/wtree/bitmap64"
+
 	"github.com/uvelichitel/wtree"
+	"github.com/uvelichitel/wtree/bitmap64"
 )
 
 type WTArray struct {
@@ -12,8 +13,6 @@ type WTArray struct {
 	Mark int
 	*Dict
 }
-
-
 
 type Dict []string
 
