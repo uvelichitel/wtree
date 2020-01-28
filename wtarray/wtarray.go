@@ -13,7 +13,6 @@ type WTArray struct {
 	Mark int
 	*Dict
 }
-
 type Dict []string
 
 func (d Dict) Lookup(s string) (int, error) {
@@ -113,7 +112,6 @@ func (wt *WTArray) Append(sym string) error {
 			return errors.New("Not enough space")
 		}
 	}
-	pos := wt.Count
 	wt.Count++
 	h = cap(*wt.Dict)
 	l = 0
@@ -122,14 +120,12 @@ func (wt *WTArray) Append(sym string) error {
 		if index > (r+l)/2 {
 			l = l + h/2
 			h = h / 2
-			(*wt.Maps)[mark].Set(1, pos)
-			pos = (*wt.Maps)[mark].Rank1(pos) - 1
+			(*wt.Maps)[mark].Append(1)
 			mark = 2*mark + 2
 		} else {
 			r = r - h/2
 			h = h / 2
-			(*wt.Maps)[mark].Set(0, pos)
-			pos = (*wt.Maps)[mark].Rank0(pos) - 1
+			(*wt.Maps)[mark].Append(0)
 			mark = 2*mark + 1
 		}
 	}
@@ -141,13 +137,12 @@ func FromDictionary(d Dict) WTArray {
 	l := len(d)
 	c := cap(d)
 	if (c & (c - 1)) != 0 {
-		c--
+		//c--
 		c |= c >> 1
 		c |= c >> 2
 		c |= c >> 4
 		c |= c >> 8
 		c |= c >> 16
-		c |= c >> 32
 		c++
 		a := make(Dict, l, c)
 		copy(a, d)
