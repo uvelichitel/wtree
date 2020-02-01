@@ -1,39 +1,35 @@
 package wtarray
 
 import (
-	"errors"
-
 	"github.com/uvelichitel/wtree"
 	"github.com/uvelichitel/wtree/bitmap64"
 )
 
-type WTArray struct {
-	Count uint
-	*Maps
-	Mark int
-	*Dict
-}
-type Dict []string
-
-func (d Dict) Lookup(s string) (int, error) {
-	for k, v := range d {
-		if v == s {
-			return k, nil
-		}
-	}
-	return 0, errors.New("Term not found in dictionary")
-}
 
 type Maps []bitmap64.Bitmap64
 
-//func (wt *WTArray)Edit(sym string, pos uint, d Dict) error{
-//	if
-//
-//	return nil
-//}
-//func (wt WTArray) Count() uint {
-//	return wt.Count
-//}
+type WTArray struct {
+	*Maps
+	Mark int
+}
+func New(c int) WTArray {
+	var wt WTArray
+	if (c & (c - 1)) != 0 {
+		//c--
+		c |= c >> 1
+		c |= c >> 2
+		c |= c >> 4
+		c |= c >> 8
+		c |= c >> 16
+		c++
+	}
+	maps := make(Maps, c-1, c-1)
+	for k, _ := range maps {
+		maps[k] = make(bitmap64.Bitmap64, 0)
+	}
+	wt.Maps = &maps
+	return wt
+}
 func (wt WTArray) BitMap() wtree.Bitmap {
 	return (*wt.Maps)[wt.Mark]
 }
@@ -66,94 +62,37 @@ func (wt WTArray) IsHead() bool {
 		return false
 	}
 }
-func (wt *WTArray) DictToLeaf(sym string) (int8, error) {
-	ind, err := wt.Dict.Lookup(sym)
-	if err != nil {
-		return 0, err
-	}
+func (wt *WTArray) ToLeaf(ind int) int8 {
 	bit := int8(ind & 1)
-	m := (ind + len(*wt.Maps) - 1) / 2
-	wt.Mark = m
-	return bit, nil
+	wt.Mark = (ind + len(*wt.Maps) - 1) / 2
+	return bit
 }
-func (wt WTArray) LeafToDict(pos uint) string {
+func (wt WTArray) FromLeaf(pos uint) int {
 	bit := (*wt.Maps)[wt.Mark].Get(pos)
-	return (*wt.Dict)[2*wt.Mark+1+int(bit)-len(*wt.Maps)]
+	return 2*wt.Mark + 1 + int(bit) - len(*wt.Maps)
 }
 
-func (wta WTArray) AccessDict(pos uint) string {
+func (wta WTArray) Access(pos uint) int {
 	wt, pos := wtree.Access(wta, pos)
 	wta = wt.(WTArray)
 	bit := (*wta.Maps)[wta.Mark].Get(pos)
-	return (*wta.Dict)[2*wta.Mark+1+int(bit)-len(*wta.Maps)]
+	return 2*wta.Mark + 1 + int(bit) - len(*wta.Maps)
 }
-
-func (wt WTArray) TrackDict(sym string, count uint) (uint, error) {
-	ind, err := wt.Dict.Lookup(sym)
-	var pos uint
-	if err != nil {
-		return 0, errors.New("Symbol is absent in dictionary")
-	}
+func (wta WTArray) Track(ind int, count uint) uint {
 	bit := int8(ind & 1)
-	m := (ind + len(*wt.Maps) - 1) / 2
-	wt.Mark = m
-	_, pos = wtree.Track(wt, count, bit)
-	return pos, nil
+	wta.Mark = (ind + len(*wta.Maps) - 1) / 2
+	_, pos := wtree.Track(wta, count, bit)
+	return pos
+}
+func (wt WTArray) Append(ind int) {
+	b := wt.ToLeaf(ind)
+	for {
+		(*wt.Maps)[wt.Mark].Append(b)
+		if wt.IsHead() {
+			return
+		}
+		b = int8((wt.Mark - 1) & 1)
+		wt = wt.Parrent().(WTArray)
+	}
 }
 
-func (wt *WTArray) Append(sym string) error {
-	var l, r, h int
-	index, err := wt.Dict.Lookup(sym)
-	if err != nil {
-		index = len(*wt.Dict)
-		if index < cap(*wt.Dict) {
-			*wt.Dict = append(*wt.Dict, sym)
-		} else {
-			return errors.New("Not enough space")
-		}
-	}
-	wt.Count++
-	h = cap(*wt.Dict)
-	l = 0
-	r = h - 1
-	for mark := 0; mark < len(*wt.Maps); {
-		if index > (r+l)/2 {
-			l = l + h/2
-			h = h / 2
-			(*wt.Maps)[mark].Append(1)
-			mark = 2*mark + 2
-		} else {
-			r = r - h/2
-			h = h / 2
-			(*wt.Maps)[mark].Append(0)
-			mark = 2*mark + 1
-		}
-	}
-	return nil
-}
-
-func FromDictionary(d Dict) WTArray {
-	var wt WTArray
-	l := len(d)
-	c := cap(d)
-	if (c & (c - 1)) != 0 {
-		//c--
-		c |= c >> 1
-		c |= c >> 2
-		c |= c >> 4
-		c |= c >> 8
-		c |= c >> 16
-		c++
-		a := make(Dict, l, c)
-		copy(a, d)
-		wt.Dict = &a
-	} else {
-		wt.Dict = &d
-	}
-	maps := make(Maps, c-1, c-1)
-	for k, _ := range maps {
-		maps[k] = make(bitmap64.Bitmap64, 0)
-	}
-	wt.Maps = &maps
-	return wt
-}
