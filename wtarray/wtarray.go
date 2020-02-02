@@ -87,7 +87,7 @@ func (wta WTArray) Track(ind int, count uint) uint {
 func (wt WTArray) Append(ind int) {
 	b := wt.ToLeaf(ind)
 	for {
-		(*wt.Maps)[wt.Mark].Append(b)
+		(*wt.Maps)[wt.Mark].Push(b)
 		if wt.IsHead() {
 			return
 		}

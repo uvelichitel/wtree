@@ -30,7 +30,7 @@ func (bm *Bitmap64) Set(bit int8, pos uint) {
 		(*bm)[n] |= 1 << (pos % 64)
 	}
 }
-func (bm *Bitmap64) Append(bit int8) {
+func (bm *Bitmap64) Push(bit int8) {
 	var U uint64
 	if len(*bm) == 0{
 		*bm = append(*bm, 1)
