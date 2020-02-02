@@ -41,7 +41,7 @@ func Huffman(w []int) (Layout, []int) {
 				e[i] = q.Pop()
 			}
 		}
-		lc, dc = Combine(e[0].Layout, e[1].Layout, e[0].D, e[1].D)
+		lc, dc = Combine(e[1].Layout, e[0].Layout, e[1].D, e[0].D)
 		ec = Elem{Weight: e[0].Weight + e[1].Weight, Layout: lc, D: dc}
 		if q.count == 0 && len(w) == 0 {
 			return ec.Layout, ec.D
@@ -49,12 +49,6 @@ func Huffman(w []int) (Layout, []int) {
 		q.Push(ec)
 	}
 }
-
-//func MakeLayout(weight []uint)Layout{
-//
-//
-//
-//}
 
 // minQueueLen is smallest capacity that queue may have.
 // Must be power of 2 for bitwise modulus: x % n == x & (n - 1).

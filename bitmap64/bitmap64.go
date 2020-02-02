@@ -17,6 +17,9 @@ func Mask(u uint64) uint64{
 	return u
 }
 
+func (bm Bitmap64) Lenth()int{
+	return 64*len(bm) - bits.LeadingZeros64(bm[len(bm)-1]) - 1
+}
 func (bm *Bitmap64) Set(bit int8, pos uint) {
 	n := int(pos / 64)
 	d := n - len(*bm) + 1
