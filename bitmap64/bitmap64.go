@@ -1,13 +1,12 @@
 package bitmap64
 
-import(
+import (
 	"math/bits"
 )
 
-
 type Bitmap64 []uint64
 
-func Mask(u uint64) uint64{
+func Mask(u uint64) uint64 {
 	u |= u >> 1
 	u |= u >> 2
 	u |= u >> 4
@@ -17,7 +16,7 @@ func Mask(u uint64) uint64{
 	return u
 }
 
-func (bm Bitmap64) Lenth()int{
+func (bm Bitmap64) Lenth() int {
 	return 64*len(bm) - bits.LeadingZeros64(bm[len(bm)-1]) - 1
 }
 func (bm *Bitmap64) Set(bit int8, pos uint) {
@@ -35,19 +34,19 @@ func (bm *Bitmap64) Set(bit int8, pos uint) {
 }
 func (bm *Bitmap64) Push(bit int8) {
 	var U uint64
-	if len(*bm) == 0{
+	if len(*bm) == 0 {
 		*bm = append(*bm, 1)
 	}
-	m:=(*bm)[len(*bm) - 1]
-	ma:=Mask(m)
-	if ma == ^U{
-		(*bm)[len(*bm) - 1]=m & (ma >> ((bit +1)&1))
+	m := (*bm)[len(*bm)-1]
+	ma := Mask(m)
+	if ma == ^U {
+		(*bm)[len(*bm)-1] = m & (ma >> ((bit + 1) & 1))
 		*bm = append(*bm, 1)
 		return
 	}
-	m=m & (ma >> ((bit +1)&1))
-	m=m + ma + 1
-	(*bm)[len(*bm) - 1] = m
+	m = m & (ma >> ((bit + 1) & 1))
+	m = m + ma + 1
+	(*bm)[len(*bm)-1] = m
 	return
 }
 func (bm Bitmap64) Get(pos uint) int8 {
@@ -74,9 +73,14 @@ func (bm Bitmap64) Select1(num uint) (pos uint) {
 	var c3 uint8
 	var n int
 	var d uint
+	num++
 	for {
-		d = uint(bits.OnesCount64(bm[n])) - 1
-		if d >= num {
+		d = uint(bits.OnesCount64(bm[n]))
+		if d == num {
+			pos += 63
+			return pos
+		}
+		if d > num {
 			break
 		}
 		num -= d
@@ -84,7 +88,7 @@ func (bm Bitmap64) Select1(num uint) (pos uint) {
 		n++
 	}
 	c = bm[n]
-	c &= (Mask(c)>>1)
+	c &= (Mask(c) >> 1)
 	c1 = uint32(c)
 	d = uint(bits.OnesCount32(c1))
 	if d < num {
@@ -106,7 +110,7 @@ func (bm Bitmap64) Select1(num uint) (pos uint) {
 		pos += 8
 		c3 = uint8(c2 >> 8)
 	}
-	for ; num != 0; num-- {
+	for ; num != 1; num-- {
 		c3 &= c3 - 1
 	}
 	pos += uint(bits.TrailingZeros8(c3))
@@ -131,7 +135,7 @@ func (bm Bitmap64) Select0(num uint) (pos uint) {
 		n++
 	}
 	c = bm[n]
-	c &= (Mask(c)>>1)
+	c &= (Mask(c) >> 1)
 	c1 = uint32(c)
 	d = 32 - uint(bits.OnesCount32(c1))
 	if d < num {

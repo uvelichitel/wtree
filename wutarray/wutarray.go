@@ -22,7 +22,7 @@ func Huffman(w []int) (Layout, []int) {
 	for {
 		for i := 0; i < 2; i++ {
 			if q.count == 0 {
-				e[i] = Elem{Weight: w[len(w)-1] + w[len(w)-2], Layout: Layout{0}, D: []int{len(w) - 2, len(w) - 1}}
+				e[i] = Elem{Weight: w[len(w)-1] + w[len(w)-2], Layout: Layout{2}, D: []int{len(w) - 2, len(w) - 1}}
 				w = w[:len(w)-2]
 				continue
 			} else {
@@ -32,16 +32,16 @@ func Huffman(w []int) (Layout, []int) {
 				e[i] = q.Pop()
 				continue
 			} else {
-				w2 = w[0] + w[1]
+				w2 = w[len(w)-1] + w[len(w)-2]
 			}
-			if w1 > w2 {
-				e[i] = Elem{Weight: w[len(w)-1] + w[len(w)-2], Layout: Layout{0}, D: []int{len(w) - 2, len(w) - 1}}
+			if w2 < w1 {
+				e[i] = Elem{Weight: w[len(w)-1] + w[len(w)-2], Layout: Layout{2}, D: []int{len(w) - 2, len(w) - 1}}
 				w = w[:len(w)-2]
 			} else {
 				e[i] = q.Pop()
 			}
 		}
-		lc, dc = Combine(e[1].Layout, e[0].Layout, e[1].D, e[0].D)
+		lc, dc = Combine(e[0].Layout, e[1].Layout, e[0].D, e[1].D)
 		ec = Elem{Weight: e[0].Weight + e[1].Weight, Layout: lc, D: dc}
 		if q.count == 0 && len(w) == 0 {
 			return ec.Layout, ec.D
