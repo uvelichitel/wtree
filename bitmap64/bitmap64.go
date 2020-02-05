@@ -16,7 +16,7 @@ func Mask(u uint64) uint64 {
 	return u
 }
 
-func (bm Bitmap64) Lenth() int {
+func (bm Bitmap64) Length() int {
 	return 64*len(bm) - bits.LeadingZeros64(bm[len(bm)-1]) - 1
 }
 func (bm *Bitmap64) Set(bit int8, pos uint) {
@@ -76,11 +76,12 @@ func (bm Bitmap64) Select1(num uint) (pos uint) {
 	num++
 	for {
 		d = uint(bits.OnesCount64(bm[n]))
-		if d == num {
-			pos += 63
-			return pos
-		}
-		if d > num {
+		if d >= num {
+			if d == num {
+				pos += 63
+				return pos
+			}
+
 			break
 		}
 		num -= d
