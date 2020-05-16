@@ -1,5 +1,6 @@
 package wtree
 
+//Standard methods for bitmaps and succinct data structures.
 type Bitmap interface {
 	Rank1(uint) uint
 	Rank0(uint) uint
@@ -8,6 +9,7 @@ type Bitmap interface {
 	Get(uint) int8
 }
 
+//Standard methods for tree.
 type WTree interface {
 	BitMap() Bitmap
 	RChild() WTree

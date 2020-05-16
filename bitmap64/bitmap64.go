@@ -4,6 +4,7 @@ import (
 	"math/bits"
 )
 
+//Represent bitmap as slice of integers.
 type Bitmap64 []uint64
 
 func Mask(u uint64) uint64 {
@@ -16,9 +17,12 @@ func Mask(u uint64) uint64 {
 	return u
 }
 
+//Count bits in bitmap.
 func (bm Bitmap64) Length() int {
 	return 64*len(bm) - bits.LeadingZeros64(bm[len(bm)-1]) - 1
 }
+
+//Set bit at position to value one or zero.
 func (bm *Bitmap64) Set(bit int8, pos uint) {
 	n := int(pos / 64)
 	d := n - len(*bm) + 1
@@ -32,6 +36,8 @@ func (bm *Bitmap64) Set(bit int8, pos uint) {
 		(*bm)[n] |= 1 << (pos % 64)
 	}
 }
+
+//Append bit to bitmup.
 func (bm *Bitmap64) Push(bit int8) {
 	var U uint64
 	if len(*bm) == 0 {
@@ -49,10 +55,13 @@ func (bm *Bitmap64) Push(bit int8) {
 	(*bm)[len(*bm)-1] = m
 	return
 }
+
+//Extract bit at position from bitmap.
 func (bm Bitmap64) Get(pos uint) int8 {
 	return int8((bm[int(pos/64)] >> (pos % 64)) & 1)
 }
 
+//Count one's in bitmap to position inclusive.
 func (bm Bitmap64) Rank1(pos uint) (count uint) {
 	var n uint
 	for ; n < pos/64; n++ {
@@ -61,11 +70,14 @@ func (bm Bitmap64) Rank1(pos uint) (count uint) {
 	count += uint(bits.OnesCount64(bm[int(n)] << (63 - pos%64)))
 	return
 }
+
+//Count zeroes in bitmao to position.
 func (bm Bitmap64) Rank0(pos uint) (count uint) {
 	count = pos - bm.Rank1(pos) + 1
 	return
 }
 
+//Calculate position of count num 1 in bitmap.
 func (bm Bitmap64) Select1(num uint) (pos uint) {
 	var c uint64
 	var c1 uint32
@@ -118,6 +130,7 @@ func (bm Bitmap64) Select1(num uint) (pos uint) {
 	return pos
 }
 
+//Calculate position of cont num zero in bitmap.
 func (bm Bitmap64) Select0(num uint) (pos uint) {
 	var c uint64
 	var c1 uint32

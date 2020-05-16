@@ -6,6 +6,7 @@ import(
 
 type Dict []string
 
+//Simplest Lookup implementation to satisfy interface.
 func (d Dict) Lookup(s string) (int, error) {
 	for k, v := range d {
 		if v == s {

@@ -9,6 +9,7 @@ type Maps []bitmap64.Bitmap64
 
 type Layout = bitmap64.Bitmap64
 
+//Construct Huffman coded layout.
 func Huffman(w []int) (Layout, []int) {
 	if len(w)&1 != 0 {
 		w = append(w, 0)
@@ -120,6 +121,7 @@ func (q *Queue) Pop() Elem {
 	return ret
 }
 
+//Merge two tree keeping correct Huffman layout.
 func Combine(l1, l2 Layout, d1, d2 []int) (Layout, []int) {
 	d := make([]int, 0)
 	l := make(Layout, 0)
@@ -172,6 +174,7 @@ func Combine(l1, l2 Layout, d1, d2 []int) (Layout, []int) {
 	return l, d
 }
 
+//Represent serialization of unbalansed binary tree.
 type UWTArray struct {
 	*Maps
 	Mark int
@@ -201,6 +204,7 @@ func (wt UWTArray) Parrent() wtree.WTree {
 	wt.Mark = int((*wt.Layout).Select1((uint(wt.Mark)+1)/2 - 1))
 	return wt
 }
+
 func (wt UWTArray) IsLChild() bool {
 	return wt.Mark&1 != 0
 }
@@ -210,26 +214,35 @@ func (wt UWTArray) IsHead() bool {
 func (wt UWTArray) IsLeaf() bool {
 	return (*wt.Layout).Get(uint(wt.Mark)) == 0
 }
+
+//Map from tree to dictionary.
 func (wt UWTArray) FromLeaf(pos uint) int {
 	bit := (*wt.Maps)[wt.Mark].Get(pos)
 	return int(2*((*wt.Layout).Rank0(uint(wt.Mark-1)))) + int(bit)
 }
+
+//Map from dictionary to tree.
 func (wt *UWTArray) ToLeaf(ind int) int8 {
 	bit := int8(ind & 1)
 	wt.Mark = int((*wt.Layout).Select0(uint(ind) / 2))
 	return bit
 }
+
+//Index in dictionary of term in sequence at position.
 func (wta UWTArray) Access(pos uint) int {
 	wt, pos := wtree.Access(wta, pos)
 	wta = wt.(UWTArray)
 	return wta.FromLeaf(pos)
 }
 
+//Position in sequence of counted inclusion of term at index ind in dictionary.
 func (wta UWTArray) Track(ind int, count uint) uint {
 	bit := wta.ToLeaf(ind)
 	_, pos := wtree.Track(wta, count, bit)
 	return pos
 }
+
+//Append term at index ind in dictionary to tree.
 func (wta UWTArray) Append(ind int) {
 	b := wta.ToLeaf(ind)
 	for {
