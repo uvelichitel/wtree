@@ -100,7 +100,7 @@ func (wt HWT) Access(pos uint) (string, error) {
 	return wt.Dict.Get(wt.HWTArray.Access(pos)), nil
 }
 
-//Multithreaded access
+//Multithreaded access to position range
 func (wt HWT) AccessRange(from, to uint) (s []string, err error) {
 	if to >= wt.Maps[0].Length() {
 		return s, errors.New("Position out of range ")
@@ -126,7 +126,7 @@ func (wt HWT) Track(s string, c uint) (uint, error) {
 	}
 	m := int(wt.Layout.Select0(uint(ind) / 2))
 	lch := (ind + 1) & 1
-	l := wt.Maps[m].Length()
+	l := uint(wt.Maps[m].Length())
 	if (lch != 0 && (wt.Maps[m].Rank0(l-1) < c)) || (lch == 0 && (wt.Maps[m].Rank1(l-1) < c)) {
 		return 0, errors.New("Too much to count")
 	}
@@ -144,9 +144,9 @@ func (wt HWT) TrackAll(s string) (r []uint, err error) {
 	lch := (ind + 1) & 1
 	l := wt.Maps[m].Length()
 	if lch != 0 {
-		c = wt.Maps[m].Rank0(l - 1)
+		c = wt.Maps[m].Rank0(l - 1) -1 
 	} else {
-		c = wt.Maps[m].Rank1(l - 1)
+		c = wt.Maps[m].Rank1(l - 1) -1
 	}
 	r = make([]uint, c)
 	var wg sync.WaitGroup

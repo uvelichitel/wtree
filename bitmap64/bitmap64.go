@@ -7,6 +7,7 @@ import (
 //Represent bitmap as slice of integers.
 type Bitmap64 []uint64
 
+//Round up to the next highest power of 2.
 func Mask(u uint64) uint64 {
 	u |= u >> 1
 	u |= u >> 2
@@ -18,8 +19,8 @@ func Mask(u uint64) uint64 {
 }
 
 //Count bits in bitmap.
-func (bm Bitmap64) Length() int {
-	return 64*len(bm) - bits.LeadingZeros64(bm[len(bm)-1]) - 1
+func (bm Bitmap64) Length() uint {
+	return uint(64*len(bm)) - uint(bits.LeadingZeros64(bm[len(bm)-1]) - 1)
 }
 
 //Set bit at position to value one or zero.
@@ -130,7 +131,7 @@ func (bm Bitmap64) Select1(num uint) (pos uint) {
 	return pos
 }
 
-//Calculate position of cont num zero in bitmap.
+//Calculate position of count num zero in bitmap.
 func (bm Bitmap64) Select0(num uint) (pos uint) {
 	var c uint64
 	var c1 uint32
