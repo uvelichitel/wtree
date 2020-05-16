@@ -5,7 +5,6 @@ import (
 	"io"
 
 	"github.com/uvelichitel/wtree/bitmap64"
-	//"github.com/uvelichitel/wtree/hwtree"
 )
 
 type Maps []bitmap64.Bitmap64
